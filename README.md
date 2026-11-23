@@ -52,6 +52,7 @@ mlops-project/
 ├── README.md
 ├── .gitignore
 ├── .env.example
+├── .dockerignore
 │
 ├── notebooks/
 │   ├── 01_training.ipynb
