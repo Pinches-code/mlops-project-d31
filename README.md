@@ -1,129 +1,118 @@
 # MLOps Project
 
-## 1. Описание проекта
+## Описание проекта
 
-Цель проекта - создать воспроизводимый ML-пайплайн,
-который включает чтение данных из S3, обучение модели,
-сохранение sklearn Pipeline и предоставление предсказаний
-через API.
+Проект разработан в рамках ДЗ1 по MLOps. Цель — предсказание стоимости аренды жилья (`price`) с помощью модели `RandomForestRegressor`.
+Данные загружаются из S3, обработка и обучение выполняются с помощью Scikit-learn.
 
-## 2. Цель проекта
+## Технологии
 
-В рамках проекта будут реализованы:
+- Python 3.11
+- Pandas, Scikit-learn
+- Boto3
+- FastAPI
+- Docker и Docker Compose
+- Jupyter Notebook
 
-- Чтение данных из S3 с помощью boto3.
-- Предобработка признаков.
-- Обучение модели машинного обучения.
-- Оценка качества модели.
-- Создание sklearn Pipeline.
-- Сохранение модели в model.pkl.
-- Контейнеризация обучения с помощью Docker.
-- Создание API на FastAPI.
-- Запуск сервисов через Docker Compose.
-
-В рамках ДЗ2 проект будет дополнен:
-
-- Экспериментами MLflow.
-- Автоматическими тестами pytest.
-- GitHub Actions.
-- Streamlit-приложением.
-
-## 3. Данные
-
-Источник данных: S3 / S3-совместимое хранилище.
-
-Чтение данных будет осуществляться непосредственно
-из хранилища с помощью библиотеки boto3.
-
-Тип задачи: будет определён после выбора датасета.
-
-Целевая переменная: будет определена после выбора датасета.
-
-Формат данных: будет указан после выбора датасета.
-
-Ручное предварительное скачивание исходных данных
-не должно быть обязательным для запуска проекта.
-
-## 4. Структура проекта
+## Структура проекта
 
 ```text
-mlops-project/
-│
-├── README.md
-├── .gitignore
-├── .env.example
-├── .dockerignore
-│
 ├── notebooks/
 │   ├── 01_training.ipynb
-│   ├── 02_pipeline.ipynb
-│   └── 03_mlflow.ipynb
-│
+│   └── 02_pipeline.ipynb
 ├── src/
 │   ├── train.py
 │   └── api.py
-│
-├── data/
-│
 ├── artifacts/
-│   └── model.pkl
-│
-├── tests/
-│   ├── test_data.py
-│   ├── test_pipeline.py
-│   └── test_api.py
-│
-├── .github/
-│   └── workflows/
-│       └── tests.yml
-│
+├── requirements.txt
 ├── Dockerfile.train
 ├── Dockerfile.api
 ├── compose.yaml
-└── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
 ```
 
-## 5. Используемые технологии
+## Данные
 
-- Python
-- pandas
-- NumPy
-- scikit-learn
-- boto3
-- Jupyter Notebook
-- Docker
-- Docker Compose
-- FastAPI
-- pytest
-- MLflow
-- Streamlit
+Используется датасет с объявлениями об аренде жилья: 20 151 строка и 13 столбцов.
+Целевая переменная — `price`.
+Данные загружаются напрямую из S3 с помощью `boto3`.
 
-## 6. Настройка S3
+## Настройка
 
-Для подключения к S3 используются переменные окружения:
+Создайте файл `.env` в корне проекта:
 
-| Переменная | Описание |
-|---|---|
-| S3_ENDPOINT_URL | Endpoint S3 |
-| S3_BUCKET | Название bucket |
-| S3_OBJECT_KEY | Путь к объекту |
-| AWS_ACCESS_KEY_ID | Идентификатор ключа |
-| AWS_SECRET_ACCESS_KEY | Секретный ключ |
-| AWS_DEFAULT_REGION | Регион |
+```env
+S3_ENDPOINT_URL=
+S3_BUCKET=
+S3_OBJECT_KEY=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=
+```
 
-Для локальной разработки можно создать файл `.env`
-на основе `.env.example`.
+Установите зависимости:
 
-Реальные ключи доступа не должны попадать в GitHub.
+```bash
+pip install -r requirements.txt
+```
 
-## 7. Установка и запуск
+## Обучение
 
-Инструкции по установке зависимостей,
-настройке окружения и запуску проекта
-будут дополнены по мере реализации этапов ДЗ1.
+- `01_training.ipynb` — обучение модели и оценка качества.
+- `02_pipeline.ipynb` — создание sklearn Pipeline, сохранение и загрузка модели.
 
-Основной сценарий запуска готового проекта:
+Модель сохраняется в `artifacts/model.pkl`.
+Для оценки используются MAE, RMSE и R².
+
+## Docker
+
+Обучение модели выполняется в контейнере `train`, API работает в отдельном контейнере `api`.
+Оба сервиса используют общий Docker volume для хранения модели.
+Запуск всего проекта:
 
 ```bash
 docker compose up --build
 ```
+
+Остановка:
+
+```bash
+docker compose down
+```
+
+## API
+
+После запуска документация API доступна по адресу:
+http://localhost:8000/docs
+Основной endpoint:
+
+`POST /predict`
+
+Пример JSON:
+
+```json
+{
+  "latitude": 48.85,
+  "longitude": 2.35,
+  "accommodates": 2,
+  "bathrooms": 1,
+  "bedrooms": 1,
+  "beds": 1,
+  "minimum_nights": 2,
+  "neighbourhood_cleansed": "Example neighbourhood",
+  "property_type": "Apartment",
+  "room_type": "Entire home/apt"
+}
+```
+
+API возвращает предсказанную стоимость аренды.
+
+## Безопасность
+
+S3-ключи хранятся в `.env` и не добавляются в Git. Файл модели создаётся при запуске и хранится в Docker volume.
+
+## Результат
+
+Реализованы загрузка данных из S3, обучение модели, sklearn Pipeline, сохранение модели, Docker Batch и FastAPI для получения предсказаний.

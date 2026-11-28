@@ -1,3 +1,4 @@
+
 services:
   train:
     build:
@@ -9,6 +10,21 @@ services:
 
     volumes:
       - model_data:/app/artifacts
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - model_data:/app/artifacts
+
+    depends_on:
+      train:
+        condition: service_completed_successfully
 
 volumes:
   model_data:
